@@ -1,0 +1,219 @@
+  ## Context
+
+  I am an entry-level AI/ML engineer building a portfolio of 6 projects that
+  cover the main ML domains (no computer vision). My goal is to signal a
+  junior → mid level ML engineer. I am learning each domain while building
+  the portfolio simultaneously.
+
+  I already have one completed project (Classification - Disease Prediction)
+  that serves as my baseline. The new projects should each be visibly more
+  mature than that baseline.
+
+  ---
+
+  ## My Existing Classification Project (Baseline - What NOT to repeat)
+
+  Structure:
+  - model.py      → trains LR and RF, saves best to model.pkl + metrics.json
+  - main.py       → FastAPI with /health /model/info /predict /train endpoints
+  - app.py        → Streamlit with sidebar metrics + prediction form
+  - data/         → CSV file
+  - requirements.txt
+
+  What it does well:
+  - Clean sklearn pipeline (ColumnTransformer → model)
+  - FastAPI with Pydantic validation and API key auth on /train
+  - Streamlit deployed on Streamlit Cloud, API on Render
+
+  What it is missing (these are the gaps I want to fix in future projects):
+  - No MLflow — no experiment tracking, no model registry
+  - Single train_test_split — fragile evaluation, not cross-validated
+  - Hardcoded hyperparameters — no tuning at all
+  - No explainability — no SHAP, no feature importance visuals
+  - No Docker — not containerised
+  - No GitHub Actions — no CI/CD
+  - No pytest — zero tests
+  - Streamlit only shows metric numbers — no charts (confusion matrix,
+    ROC curve, feature importance)
+  - print() instead of logging
+
+  ---
+
+  ## Standard Stack — Apply to ALL Projects
+
+  Every project must have these. Learn them once, repeat them:
+
+  1. MLflow
+     - Log every run: params, metrics, model artifact
+     - Register the best model in the Model Registry
+     - Use cross_val_score (cv=5) instead of a single train_test_split for
+       reliable evaluation, then do a final fit on full train set
+
+  2. FastAPI
+     - Same pattern as classification: /health /model/info /predict
+     - Load model from MLflow Model Registry on startup (not from .pkl file)
+
+  3. Streamlit
+     - Sidebar: model metrics AND a chart (confusion matrix, or equivalent
+       for the domain)
+     - Main area: prediction form + result
+     - Add at least one Plotly chart relevant to the domain
+
+  4. Docker
+     - Dockerfile for the API
+     - docker-compose.yml with two services: mlflow + api
+     - API depends_on mlflow
+
+  5. GitHub Actions (.github/workflows/ci.yml)
+     - Trigger: push to main
+     - Steps: install deps → run pytest → docker build
+     - Keep it simple, just prove CI exists
+
+  6. pytest (tests/test_api.py)
+     - Test /health returns 200
+     - Test /predict returns expected keys
+     - Test bad input returns 422
+
+  7. Logging
+     - Replace all print() with Python's logging module
+     - Use logger = logging.getLogger(__name__)
+
+  ---
+
+  ## The 5 Projects To Build
+
+  ### Project 2: Regression — House Price or Salary Prediction
+
+  Domain: Predict a continuous numeric value
+  Dataset: California Housing (sklearn built-in) or a Kaggle salary dataset
+  Models to compare: LinearRegression, Ridge, RandomForest, XGBoostRegressor
+  Primary metrics: MAE, RMSE, R²  (report train vs test gap for each)
+  Evaluation: 5-fold cross-validation on train set, final eval on held-out test
+
+  New thing this project adds (beyond the standard stack):
+  - Optuna for hyperparameter tuning on the best model (10-20 trials)
+  - SHAP: after prediction, show a waterfall chart in Streamlit explaining
+    which features pushed the price up or down
+  - Streamlit: show a predicted vs actual scatter plot (test set)
+
+  File structure:
+  regression/
+  ├── .github/workflows/ci.yml
+  ├── docker/
+  │   └── Dockerfile.api
+  ├── docker-compose.yml
+  ├── src/
+  │   ├── train.py        (MLflow runs, Optuna tuning, model registry)
+  │   └── api.py          (FastAPI)
+  ├── app.py              (Streamlit)
+  ├── data/
+  ├── tests/
+  │   └── test_api.py
+  └── requirements.txt
+
+  ---
+
+  ### Project 3: Clustering — Customer Segmentation
+
+  Domain: Unsupervised — group data without labels
+  Dataset: Mall customers or E-commerce transactions (Kaggle)
+  Models to compare: KMeans, DBSCAN, AgglomerativeClustering
+  Evaluation: Silhouette Score, Davies-Bouldin Index, Elbow plot for KMeans
+  (No train/test split — fit on full dataset, evaluate cluster quality)
+
+  New thing this project adds:
+  - UMAP for 2D dimensionality reduction → interactive Plotly scatter plot
+    coloured by cluster label
+  - Segment profiling: compute mean feature values per cluster, give each
+    cluster a business label (e.g. "High-spend infrequent", "Low-spend loyal")
+  - No prediction API needed — Streamlit IS the output: show the cluster
+    visualisation and segment profile table
+  - Still use MLflow to log: n_clusters, algorithm, silhouette score per run
+
+  Note: This project has no /predict endpoint. FastAPI can have a single
+  /assign endpoint that takes one data point and returns its cluster label.
+
+  ---
+
+  ### Project 4: Anomaly Detection — Fraud or Network Intrusion
+
+  Domain: Find the rare abnormal events in mostly-normal data
+  Dataset: Credit Card Fraud (Kaggle) or NSL-KDD network intrusion
+  Key challenge: heavy class imbalance (e.g. 0.17% fraud)
+
+  Models to compare: IsolationForest, OneClassSVM, a threshold baseline
+  (flag top X% by anomaly score)
+  Primary metrics: Precision-Recall AUC, F1 at chosen threshold
+  (Do NOT use accuracy — 99.8% accuracy by predicting everything as normal
+  is meaningless here)
+  Evaluation: Precision-Recall curve, confusion matrix at different thresholds
+
+  New thing this project adds:
+  - Evidently AI: generate a data drift report comparing your training
+    distribution to a simulated "production" batch
+  - Streamlit: threshold slider — let the user move a slider and watch the
+    confusion matrix and precision/recall update in real time
+  - Show the Precision-Recall curve as a Plotly chart
+  - Log threshold, precision, recall, PR-AUC to MLflow per run
+
+  ---
+
+  ### Project 5: Forecasting — Demand or Energy Forecasting
+
+  Domain: Predict future values in a time series
+  Dataset: Retail sales (Kaggle), electricity consumption, or AirPassengers
+  Key challenge: time-based data leaks if you split randomly
+
+  Models to compare: SARIMA (statsmodels), Prophet (Meta),
+  XGBoost with lag features (manual feature engineering)
+  Primary metrics: MAE, RMSE, MAPE
+  Evaluation: Walk-forward validation (expanding window) — NOT random split
+
+  New thing this project adds:
+  - Walk-forward validation: train on months 1-12, test on 13; then
+    train on 1-13, test on 14; etc. Average the errors. This is the
+    correct way to evaluate time series.
+  - Confidence intervals: show upper/lower bounds on the forecast chart
+  - Feature engineering for XGBoost: lag features (t-1, t-7, t-30),
+    rolling mean, month/day-of-week dummies
+  - Streamlit: Plotly chart with historical data + forecast + confidence band
+  - Log each model's walk-forward MAE/RMSE to MLflow for comparison
+
+  Note: Prophet and SARIMA have their own fitting API — they do not use
+  sklearn Pipeline. That is expected and fine.
+
+  ---
+
+  ### Project 6: LLM — RAG Document Q&A
+
+  Domain: Retrieval-Augmented Generation
+  This project is architecturally different from all others — no sklearn,
+  no MLflow, no train/test split.
+
+  What to build: A RAG system that lets a user ask questions about a
+  document corpus and get grounded answers with source citations.
+
+  Stack:
+  - LLM: Claude claude-haiku-4-5-20251001 via Anthropic API (cheap, fast)
+  - Embeddings: text-embedding-3-small via OpenAI API, or a free
+    HuggingFace model (sentence-transformers/all-MiniLM-L6-v2)
+  - Vector store: ChromaDB (local, no account needed)
+  - Framework: Build it manually (no LangChain) so you understand each step
+  - Streamlit: chat interface with streaming responses and cited sources
+
+  Pipeline:
+  1. ingest.py — chunk documents, embed them, store in ChromaDB
+  2. retriever.py — embed the query, retrieve top-k chunks from ChromaDB
+  3. api.py — FastAPI endpoint: takes question, calls retriever,
+     calls LLM with context + question, returns answer + source chunks
+  4. app.py — Streamlit chat UI with streaming
+
+  What to demonstrate in the README/Streamlit:
+  - Show a question answered WITH RAG (grounded, accurate, cites source)
+  - Show the same question answered WITHOUT RAG (hallucinated answer)
+  - This comparison is your main demo
+
+  Docker: Dockerfile for the API (ChromaDB runs in-process, no separate service)
+  No MLflow needed — this is not a training pipeline
+
+  ---
