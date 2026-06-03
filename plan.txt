@@ -29,11 +29,12 @@
   - No MLflow — no experiment tracking, no model registry - DONE
   - Single train_test_split — fragile evaluation, not cross-validated -DONE
   - Hardcoded hyperparameters — no tuning at all - DONE
-  - No explainability — no SHAP, no feature importance visuals
+  - No explainability — no SHAP, no feature importance visuals -Done
+  - print() instead of logging -DONE
   - No Docker — not containerised
   - No GitHub Actions — no CI/CD
   - No pytest — zero tests
-  - print() instead of logging -DONE
+  
 
   ---
 
