@@ -6,9 +6,9 @@ import joblib
 from sklearn.model_selection import train_test_split
 from features import AddFeature  # noqa: F401 — required for joblib to unpickle the pipeline
 
-API_URL = "http://localhost:8004"
+API_URL = "https://taxi-fare-vo0u.onrender.com"
 
-st.set_page_config(page_title="Taxi Fare Prediction", layout="wide")
+st.set_page_config(page_title="Taxi Fare Prediction", page_icon="🚕", layout="wide")
 
 
 @st.cache_resource
@@ -66,7 +66,7 @@ except Exception:
 
 
 # ── Main area ─────────────────────────────────────────────────────────────────
-st.title("Taxi Fare Prediction")
+st.title("🚕 Taxi Fare Prediction")
 st.markdown("Fill in the trip details below and click **Predict**.")
 
 with st.form("prediction_form"):

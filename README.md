@@ -1,6 +1,15 @@
-# Taxi Fare Prediction — Regression
+# 🚕 Taxi Fare Prediction — Regression
 
-A production-style ML project that predicts taxi fares from trip features. 
+A production-style ML project that predicts taxi fares from trip features. Part of a 6-project portfolio targeting a junior → mid-level ML engineer signal.
+
+## Live Demo
+
+| | |
+|---|---|
+| 🖥️ **Streamlit App** | https://taxi-fare-prediction-portfolio.streamlit.app/ |
+| 📡 **API Docs** | https://taxi-fare-vo0u.onrender.com/docs |
+
+> ⚠️ Render free tier spins down after inactivity — first request may take ~30s to wake up.
 
 ## Tech Stack
 
@@ -18,10 +27,9 @@ A production-style ML project that predicts taxi fares from trip features.
 
 - Compares 6 regression models (LinearRegression, Ridge, Lasso, RandomForest, XGBoost, MLP) using 5-fold cross-validation
 - Tunes the best model (RandomForest) with Optuna (15 trials)
-- Logs all runs, params, and metrics to MLflow and registers the best model in the MLflow Model Registry
-- Serves predictions via a FastAPI endpoint that loads the registered model on startup
-- Explains each prediction with SHAP — shows which features pushed the fare up or down
-- Streamlit frontend with sidebar metrics, predicted vs actual scatter plot, and SHAP bar chart
+- Logs all runs, params, and metrics to MLflow for local experiment tracking and comparison
+- Serves predictions via a FastAPI endpoint with SHAP explainability per prediction
+- Streamlit frontend with sidebar metrics, predicted vs actual scatter plot, and SHAP bar chart per prediction
 
 ## Project Structure
 
@@ -30,14 +38,16 @@ A production-style ML project that predicts taxi fares from trip features.
 ├── eda.py                # Exploratory data analysis
 ├── api.py                # FastAPI — /health /model/info /predict
 ├── app.py                # Streamlit frontend
+├── features.py           # Shared feature engineering (AddFeature transformer)
+├── model.pkl             # Serialised best pipeline for deployment
+├── metrics.json          # Best model metrics for API /model/info endpoint
 ├── data/                 # Dataset (taxi_trip_pricing.csv)
-├── mlruns/               # MLflow tracking and model artifacts
 ├── tests/
 │   └── test_api.py       # pytest — health, predict, validation
 ├── Dockerfile            # API container
 ├── docker-compose.yml    # MLflow + API services
 ├── .github/workflows/
-│   └── ci.yml            # Install → test → docker build
+│   └── ci.yml            # Install → docker build
 └── requirements.txt
 ```
 
@@ -71,7 +81,7 @@ pytest tests/test_api.py -v
 ## Limitations
 
 - **Dataset is small (~950 rows)** — model performance is limited by data size, not architecture
-- **mlruns/ committed to the repo** — in a real system MLflow artifacts would live on a remote store (S3, GCS). Committed here to keep deployment simple for a portfolio project
-- **Model auto-registers on every training run** — in production you would manually promote a model to the registry only after reviewing metrics and deciding it's better than the current version
+- **MLflow is local only** — experiment tracking and model registry run locally. For deployment, the best model is exported to `model.pkl` to avoid cross-platform MLflow artifact path issues. In a real system, MLflow would run on a remote server with S3/GCS artifact storage
+- **Model auto-registers on every training run** — in production you would manually promote a model to the registry only after reviewing metrics
 - **No authentication on /predict** — a production API would require API key or OAuth
-
+- **Render free tier cold starts** — API sleeps after inactivity, first request takes ~30s
