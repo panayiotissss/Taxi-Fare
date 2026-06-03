@@ -1,0 +1,23 @@
+artifact_path: file:///C:/Users/PanayiotisS/Taxi-Fare/mlruns/1/models/m-66acf97cbd3b46898e3aa3eb4114e51f/artifacts
+flavors:
+  python_function:
+    env:
+      conda: conda.yaml
+      virtualenv: python_env.yaml
+    loader_module: mlflow.sklearn
+    model_path: model.pkl
+    predict_fn: predict
+    python_version: 3.11.0
+  sklearn:
+    code: null
+    pickled_model: model.pkl
+    serialization_format: cloudpickle
+    sklearn_version: 1.8.0
+    skops_trusted_types: null
+mlflow_version: 3.13.0
+model_id: m-66acf97cbd3b46898e3aa3eb4114e51f
+model_size_bytes: 7072
+model_uuid: m-66acf97cbd3b46898e3aa3eb4114e51f
+prompts: null
+run_id: 2f2d6836c17e41ab8508224b7765f65e
+utc_time_created: '2026-06-03 09:22:11.654661'
