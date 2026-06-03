@@ -33,7 +33,7 @@ try:
     info = requests.get(f"{API_URL}/model/info", timeout=3).json()
     m = info["metrics"]
 
-    st.sidebar.markdown(f"**Model:** `{info['model_name']}` — version {info['version']}")
+    st.sidebar.markdown(f"**Model:** `{info['model_name']}`")
     st.sidebar.divider()
 
     c1, c2 = st.sidebar.columns(2)
