@@ -2,10 +2,12 @@ from fastapi import FastAPI
 from typing import Literal
 from pydantic import BaseModel
 from contextlib import asynccontextmanager
-import mlflow
 import pandas as pd
 import shap
+import joblib
+import json
 import logging
+from features import AddFeature  # noqa: F401 — required for joblib to unpickle the pipeline
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -23,14 +25,13 @@ class TaxiFareFeatures(BaseModel):
     Trip_Duration_Minutes: float
 
 
-#Startup/Shutdown
 model = None
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     global model
-    model = mlflow.sklearn.load_model("models:/taxi-fare-best/latest")
-    logger.info("Model loaded from MLflow registry")
+    model = joblib.load("model.pkl")
+    logger.info("Model loaded from model.pkl")
     yield
 
 
@@ -43,14 +44,9 @@ def health():
 
 @app.get('/model/info')
 def model_info():
-    client = mlflow.tracking.MlflowClient()
-    version = client.get_latest_versions("taxi-fare-best")[0]
-    run = client.get_run(version.run_id)
-    return {
-        "model_name": "taxi-fare-best",
-        "version": version.version,
-        "metrics": run.data.metrics
-    }
+    with open("metrics.json") as f:
+        metrics = json.load(f)
+    return {"model_name": "RandomForest-Tuned", "metrics": metrics}
 
 @app.post('/predict')
 def predict(features: TaxiFareFeatures):
@@ -73,7 +69,3 @@ def predict(features: TaxiFareFeatures):
 
     logger.info(f"Prediction request: {features.model_dump()} → {prediction}")
     return {'predicted_fare': prediction, 'shap_values': shap_dict}
-
-
-
-    

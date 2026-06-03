@@ -3,13 +3,14 @@ import logging
 import mlflow
 import mlflow.sklearn
 import warnings
+import joblib
+import json
 #Data manipulation
 import pandas as pd
 import numpy as np
 #Modeling
 from sklearn.model_selection import train_test_split
 from sklearn.pipeline import Pipeline
-from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.compose import ColumnTransformer
 from sklearn.preprocessing import RobustScaler, OneHotEncoder , OrdinalEncoder
 from sklearn.impute import SimpleImputer
@@ -21,6 +22,7 @@ from xgboost import XGBRegressor
 from sklearn.model_selection import cross_val_score
 from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 import optuna
+from features import AddFeature
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -46,16 +48,6 @@ X, y = df.drop(columns=['Trip_Price']), df['Trip_Price']
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 
 
-
-#Feature Engineer Columns
-class AddFeature(BaseEstimator, TransformerMixin):
-    def fit(self, X, y=None):
-        return self
-    def transform(self, X, y=None):
-        X = X.copy()
-        X['speed_kmph'] = X['Trip_Distance_km'] / X['Trip_Duration_Minutes'] * 60
-        return X
-
 # Define columns
 numeric_cols     = ['Trip_Distance_km', 'Base_Fare', 'Per_Km_Rate', 'Per_Minute_Rate', 'Trip_Duration_Minutes','speed_kmph']
 discrete_cols    = ['Passenger_Count']
@@ -73,10 +65,10 @@ preprocessor = ColumnTransformer(
     ]
 )
 
-models = {'LinearRegression':LinearRegression() , 
+models = {'LinearRegression':LinearRegression() ,
           'Ridge':Ridge() ,
-          'Lasso':Lasso() , 
-          'RandomForest':RandomForestRegressor(), 
+          'Lasso':Lasso() ,
+          'RandomForest':RandomForestRegressor(),
           'XGBoost':XGBRegressor(),
           'NeuralNetwork':MLPRegressor(solver='lbfgs',max_iter=5000)
 }
@@ -86,7 +78,7 @@ mlflow.set_experiment("taxi-fare-regression")
 
 for name, model in models.items():
     with mlflow.start_run(run_name=name):
-        pipeline= Pipeline(steps=[  
+        pipeline= Pipeline(steps=[
         ('feature_engineer',AddFeature()),
         ('preprocessor',preprocessor),
         ('model',model)
@@ -96,8 +88,6 @@ for name, model in models.items():
         cv_rmse = -cross_val_score(pipeline, X_train, y_train, cv=5, scoring='neg_root_mean_squared_error').mean()
         cv_r2   =  cross_val_score(pipeline, X_train, y_train, cv=5, scoring='r2').mean()
         pipeline.fit(X_train, y_train)
-
-        #Feature Selection Columns --> If needed (Not for this project)
 
         if hasattr(pipeline.named_steps['model'], 'feature_importances_'):
             feature_names = pipeline.named_steps['preprocessor'].get_feature_names_out()
@@ -150,15 +140,15 @@ def objective(trial):
         'min_samples_leaf':  trial.suggest_int('min_samples_leaf', 1, 10),
         'max_features':      trial.suggest_categorical('max_features', ['sqrt', 'log2', 1.0])
     }
-    
-    pipeline= Pipeline(steps=[  
+
+    pipeline= Pipeline(steps=[
         ('feature_engineer',AddFeature()),
         ('preprocessor',preprocessor),
         ('model',RandomForestRegressor(**params,random_state=42))
         ])
     cv_mae  = -cross_val_score(pipeline, X_train, y_train, cv=5, scoring='neg_mean_absolute_error').mean()
     return cv_mae
-    
+
 
 study = optuna.create_study(direction='minimize')
 study.optimize(objective, n_trials=15)
@@ -167,7 +157,7 @@ logger.info(f"Best params: {study.best_params}")
 
 
 with mlflow.start_run(run_name='RandomForest-Tuned'):
-    pipeline= Pipeline(steps=[  
+    pipeline= Pipeline(steps=[
         ('feature_engineer',AddFeature()),
         ('preprocessor',preprocessor),
         ('model',RandomForestRegressor(**study.best_params,random_state=42))
@@ -193,13 +183,20 @@ with mlflow.start_run(run_name='RandomForest-Tuned'):
         'test_rmse': test_rmse,
         'test_r2': test_r2
     })
-    
+
     mlflow.sklearn.log_model(pipeline, name='model')
 
     run_id = mlflow.active_run().info.run_id
     mlflow.register_model(f"runs:/{run_id}/model", "taxi-fare-best")
     logger.info(f"Tuned RandomForest → Test R²: {test_r2:.4f} | Test MAE: {test_mae:.2f}")
 
-
-
-
+joblib.dump(pipeline, "model.pkl")
+json.dump({
+    'train_mae':  round(train_mae, 4),
+    'train_rmse': round(train_rmse, 4),
+    'train_r2':   round(train_r2, 4),
+    'test_mae':   round(test_mae, 4),
+    'test_rmse':  round(test_rmse, 4),
+    'test_r2':    round(test_r2, 4),
+}, open("metrics.json", "w"))
+logger.info("Saved model.pkl and metrics.json")

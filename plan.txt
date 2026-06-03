@@ -31,9 +31,9 @@
   - Hardcoded hyperparameters — no tuning at all - DONE
   - No explainability — no SHAP, no feature importance visuals -Done
   - print() instead of logging -DONE
-  - No Docker — not containerised
-  - No GitHub Actions — no CI/CD
-  - No pytest — zero tests
+  - No Docker — not containerised -DONE
+  - No GitHub Actions — no CI/CD -DONE
+  - No pytest — zero tests -DONE
   
 
   ---

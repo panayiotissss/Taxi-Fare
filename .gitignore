@@ -1,3 +1,6 @@
+mlruns/
+mlflow.db
+
 __pycache__/
 *.pyc
 *.pyo
@@ -7,7 +10,6 @@ __pycache__/
 venv/
 .venv/
 
-*.pkl
 *.egg-info/
 dist/
 build/

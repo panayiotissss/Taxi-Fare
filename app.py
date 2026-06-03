@@ -2,8 +2,9 @@ import streamlit as st
 import requests
 import pandas as pd
 import plotly.express as px
-import mlflow
+import joblib
 from sklearn.model_selection import train_test_split
+from features import AddFeature  # noqa: F401 — required for joblib to unpickle the pipeline
 
 API_URL = "http://localhost:8004"
 
@@ -12,7 +13,7 @@ st.set_page_config(page_title="Taxi Fare Prediction", layout="wide")
 
 @st.cache_resource
 def load_model():
-    return mlflow.sklearn.load_model("models:/taxi-fare-best/latest")
+    return joblib.load("model.pkl")
 
 
 @st.cache_data
