@@ -26,16 +26,14 @@
   - Streamlit deployed on Streamlit Cloud, API on Render
 
   What it is missing (these are the gaps I want to fix in future projects):
-  - No MLflow — no experiment tracking, no model registry
-  - Single train_test_split — fragile evaluation, not cross-validated
-  - Hardcoded hyperparameters — no tuning at all
+  - No MLflow — no experiment tracking, no model registry - DONE
+  - Single train_test_split — fragile evaluation, not cross-validated -DONE
+  - Hardcoded hyperparameters — no tuning at all - DONE
   - No explainability — no SHAP, no feature importance visuals
   - No Docker — not containerised
   - No GitHub Actions — no CI/CD
   - No pytest — zero tests
-  - Streamlit only shows metric numbers — no charts (confusion matrix,
-    ROC curve, feature importance)
-  - print() instead of logging
+  - print() instead of logging -DONE
 
   ---
 

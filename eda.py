@@ -13,9 +13,9 @@ df = pd.read_csv("data/taxi_trip_pricing.csv")
 # We are going to check about nulls/missing/extreme outliers/duplicates - DONE
 # /correlations/dtypes # Get a feel of the dataset and decide which type of features we are going to engineer and what encoding and scaling process we are going to take - DONE
 
-# Plot features against the target to see if they influence
+# Plot features against the target to see if they influence - DONE
 # Target variable distribution — check if trip_price (or whatever the target column is called) is heavily right-skewed. Taxi fares often are — most trips are cheap, a few are very expensive. If it's skewed, you may
-  #want to consider a log-transform of the target, which can improve model performance significantly.
+  #want to consider a log-transform of the target, which can improve model performance significantly. - DONE
 
 
 
@@ -52,6 +52,9 @@ print(df.describe())
 for col in df.select_dtypes(include='object').columns:
       print(f"{col}: {df[col].unique()}")
 
+
+for col in df.select_dtypes(include='number').columns:
+      print(f"{col}: {df[col].unique()}")
 
 #Time_of_Day: ['Morning' 'Afternoon' 'Evening' 'Night' nan]
 #Day_of_Week: ['Weekday' 'Weekend' nan]
